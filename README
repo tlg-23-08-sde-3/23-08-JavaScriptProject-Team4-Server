@@ -1,4 +1,13 @@
-Flight Track Server
+# Flight Track Server
 
--   Joseph Noble
--   Angel Villasante
+### Authors / Contributors
+
+- Joseph Noble
+- Angel Villasante
+
+### Installation
+
+- Clone repository
+- `npm install`
+- Create `.env` file
+- Add [properties] to `.env` file
