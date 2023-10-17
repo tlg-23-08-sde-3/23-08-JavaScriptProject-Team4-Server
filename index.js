@@ -33,7 +33,15 @@ app.use(FlightsRouter);
 
 const PORT = process.env.PORT || 8080;
 
-let a = { a: 1 };
+// const a = { a: { hex: 1 }, b: { hex: 2 }, c: { hex: 3 } };
+
+// a["d"] = { hex: 4 };
+// b = a["d"];
+// b.r = 69;
+
+// for (const t in a) {
+//     console.log(a[t]);
+// }
 
 app.listen(PORT, async () => {
     console.log(`Listening on port: ${PORT}`);

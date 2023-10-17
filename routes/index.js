@@ -2,7 +2,6 @@ const express = require("express");
 const Router = express.Router();
 const axios = require("axios");
 
-const { flights_snapshot } = require("../models/db/flights");
 const Scrapper = require("../utils/scrapper");
 
 const MAX_AIRPLANES = 1000;
@@ -20,26 +19,19 @@ Router.get("/api/airplane/picture/:registration", async (req, res) => {
     res.send({ picture: url });
 });
 
-Router.get("/api/flights/", (req, res) => {
-    const result = flights_snapshot.map(function (flight) {
-        return {
-            hex: flight.hex,
-            lat: flight.lat,
-            lng: flight.lng,
-            dir: flight.dir,
-            flight_icao: flight.flight_icao,
-        };
-    });
-    res.send(result);
-});
-
-Router.get("/api/flight/:hex", (req, res) => {
-    const hex = req.params.hex;
-    const result = flights_snapshot.find((flight) => {
-        return flight.hex === hex;
-    });
-    res.send(result);
-});
+// DEPRECATED
+// Router.get("/api/flights/", (req, res) => {
+//     const result = flights_snapshot.map(function (flight) {
+//         return {
+//             hex: flight.hex,
+//             lat: flight.lat,
+//             lng: flight.lng,
+//             dir: flight.dir,
+//             flight_icao: flight.flight_icao,
+//         };
+//     });
+//     res.send(result);
+// });
 
 function randomFromList(list) {
     const random = Math.floor(Math.random() * list.length);
