@@ -3,9 +3,9 @@ const Router = express.Router();
 const axios = require("axios");
 const AirLabs = require("../utils/airlabs");
 
-Router.get("/api/flight/", async (req, res) => {
+Router.get("/api/flight/:hex", async (req, res) => {
     try {
-        const hex = req.query.hex;
+        const hex = req.params.hex;
 
         const result = await AirLabs.getFlightInfoFromAirLabs(hex);
 
