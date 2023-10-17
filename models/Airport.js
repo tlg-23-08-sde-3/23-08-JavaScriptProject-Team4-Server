@@ -1,17 +1,24 @@
+//According to AirLabs the API won't provide to much info about the aiports while we use the free plan
+//Found this website that gives you a spreadsheet what we need https://ourairports.com/data/
+//Then parsed to JSON using https://csvjson.com
+//Importing this data into our database.
 const mongoose = require("mongoose");
 const axios = require("axios");
 
 const airportSchema = mongoose.Schema({
-    name: { type: String },
-    iata_code: { type: String },
+    id: { type: Number },
     icao_code: { type: String },
-    lat: { type: String },
-    lng: { type: String },
-    alt: { type: String },
-    city: { type: String },
-    city_code: { type: String },
-    un_locode: { type: String },
+    iata_code: { type: String },
+    name: { type: String },
+    lat: { type: Number },
+    lng: { type: Number },
+    alt: { type: Number },
+    continent: { type: String },
     country_code: { type: String },
+    iso_region: { type: String },
+    city: { type: String },
+    website: { type: String },
+    wikipedia_link: { type: String },
 });
 
 module.exports = mongoose.model("Airport", airportSchema);
