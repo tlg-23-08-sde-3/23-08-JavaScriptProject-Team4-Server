@@ -48,5 +48,5 @@ app.listen(PORT, async () => {
 
     await connect();
 
-    AirLabs.dataCollector(0);
+    AirLabs.dataCollector(-1);
 });
