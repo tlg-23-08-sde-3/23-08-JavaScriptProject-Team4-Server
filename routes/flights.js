@@ -6,7 +6,7 @@ const AirLabs = require("../utils/airlabs");
 Router.get("/api/flights/", async (req, res) => {
     try {
         //const result = AirLabs.Flights.map(function (flight) {
-        const result = AirLabs.AirlabsFlights.map(function (flight) {
+        const result = AirLabs.AirlabsFlightsArray.map(function (flight) {
             return {
                 hex: flight.hex,
                 lat: flight.lat,

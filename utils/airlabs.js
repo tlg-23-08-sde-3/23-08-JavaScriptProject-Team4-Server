@@ -21,17 +21,25 @@ class AirLabs {
     }
 
     //Entry point function of this class. It will call the updateAllData function every XXX seconds.
-    async dataCollector() {
+    //It receives a seconds parameter and it will act as follows:
+    // seconds < 0 : exits
+    // seconds == 0: it runs once and exits
+    // seconds > 0 : it will hit AirLabs every x seconds
+    async dataCollector(seconds) {
         //Getting the flights from the DataBase
         //this.#flightsList = await this.getFlightListFromDB(true);
-        await this.updateAllData2();
-        await setInterval(
-            async function () {
-                //await this.updateAllData();
-                await this.updateAllData2();
-            }.bind(this),
-            30 * 1000
-        );
+        if (seconds >= 0) {
+            await this.updateAllData2();
+            if (seconds > 0) {
+                await setInterval(
+                    async function () {
+                        //await this.updateAllData();
+                        await this.updateAllData2();
+                    }.bind(this),
+                    seconds * 1000
+                );
+            }
+        }
     }
 
     //HAVING MEMORY LEAK PROBLEMS WITH THIS ONE, LETS MAKE IS SIMPLER
@@ -210,20 +218,36 @@ class AirLabs {
 
     //Given a flight hex, will query AirLabs API and return an specific flight
     //https://airlabs.co/docs/flight
-    async getFlightInfoFromAirLabs(hex) {
-        let flight = this.#flightsList.find((flight) => {
-            return flight.hex === hex;
-        });
-        if (!flight) {
-            flight = this.#airlabsSnapshot[hex];
+    async getFlightInfoFromAirLabs(hex, iata_code, icao_code) {
+        const flight = this.#airlabsSnapshot[hex];
+
+        if (iata_code === undefined) {
+            iata_code = "";
         }
-        if (!flight) {
+        if (icao_code === undefined) {
+            icao_code = "";
+        }
+
+        if (flight !== undefined) {
+            const airlabsResponse = await axios(
+                `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${flight.flight_icao}&flight_iata=${flight.flight_iata}`
+            );
+            airlabsResponse.data.response.positionHistory =
+                flight.positionHistory;
+            return airlabsResponse.data.response;
+        } else if (iata_code || icao_code) {
+            console.log(icao_code);
+            const airlabsResponse = await axios(
+                `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${icao_code}&flight_iata=${iata_code}`
+            );
+            // airlabsResponse.data.response.positionHistory =
+            //     flight.positionHistory;
+            console.log(airlabsResponse.data);
+            return airlabsResponse.data.response;
+        } else {
             throw new Error(`Flight hex: ${hex} doesn't exist.`);
         }
-        const airlabsResponse = await axios(
-            `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${flight.flight_icao}&flight_iata=${flight.flight_iata}`
-        );
-        return airlabsResponse.data.response;
+        return undefined;
     }
 
     //returns all the active flights from the database.
@@ -322,7 +346,7 @@ class AirLabs {
     get Flights() {
         return this.#flightsList;
     }
-    get AirlabsFlights() {
+    get AirlabsFlightsArray() {
         return Object.values(this.#airlabsSnapshot);
     }
 }
