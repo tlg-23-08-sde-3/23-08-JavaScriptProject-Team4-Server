@@ -153,7 +153,8 @@ class AirLabs {
             flightsArray
                 .filter((elem) => elem?.updated < latestUpdateTime - 600)
                 .forEach((f) => {
-                    delete this.#airlabsSnapshot[f.hex]
+                    //this.#airlabsSnapshot[f.hex] = undefined;
+                    delete this.#airlabsSnapshot[f.hex];
                     deletedFlightCount++;
                 });
             this.printLog("Finished Storing data.", true);
