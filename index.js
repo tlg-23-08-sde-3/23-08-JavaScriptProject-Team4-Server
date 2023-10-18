@@ -63,7 +63,7 @@ app.listen(PORT, async function () {
 
 //AirLabs.dataCollector();
 
-////TEST
+//TEST
 // async function continuousFunction() {
 //     // Perform asynchronous tasks here
 //     // For this example, we'll simulate an asynchronous task with a timeout
@@ -77,7 +77,7 @@ app.listen(PORT, async function () {
 //     }, 1000);
 // }
 
-// const interval = await setInterval(continuousFunction, 1000);
+// const interval = setInterval(continuousFunction, 1000);
 
 //TODO DELETE THIS, JUST TO SHOW HOW MONGO WOULD HANDLE MODIFICATIONS AND UPDATES
 async function testingDB() {
