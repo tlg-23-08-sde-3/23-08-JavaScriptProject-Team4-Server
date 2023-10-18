@@ -25,12 +25,13 @@ class DB {
                 console.log(`Connecting to MongoDB database...`);
                 //await mongoose.connect(mongoDB_URL);
                 await mongoose.connect(
-                    `mongodb://${process.env.MONGODB_LOCAL_ADDRESS}:27017/flighttrack`
+                    //`mongodb://${process.env.MONGODB_LOCAL_ADDRESS}:27017/flighttrack`
+                    `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.ln73gxc.mongodb.net/?retryWrites=true&w=majority`
                 );
                 console.log("connected to MongoDB with mongoose.");
 
                 //Checking DB health, making sure the Airport and Airline collections exist, if not then populate them
-                if (process.env.DB_HEALTH_CHECK === true) {
+                if (process.env.DB_HEALTH_CHECK === "true") {
                     await this.checkDBHealth();
                 }
                 this.#connected = true;
@@ -43,7 +44,7 @@ class DB {
     async checkDBHealth() {
         console.log(`Checking DB's health.....`);
         console.log(`Veryfing Airlines Collection....`);
-        if ((await Airline.find()).length !== AirlineDefault.length) {
+        if ((await Airline.find()).length === AirlineDefault.length) {
             console.log(`Airlines Collection is healthy....`);
         } else {
             console.log(
@@ -61,7 +62,7 @@ class DB {
         }
 
         console.log(`Veryfing Airport Collection....`);
-        if ((await Airport.find()).length !== AirportDefault.length) {
+        if ((await Airport.find()).length === AirportDefault.length) {
             console.log(`Airports Collection is healthy....`);
         } else {
             console.log(
