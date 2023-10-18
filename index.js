@@ -3,6 +3,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const mongoose = require("mongoose");
+
+const Flight = require("./models/Flight");
 
 //Importing our routers
 const { Router } = require("./routes/index");
@@ -16,7 +19,8 @@ const { Router: FlightsRouter } = require("./routes/flights");
 const AirLabs = require("./utils/airlabs");
 
 //Import our MongoDB connector
-const { connect } = require("./utils/db");
+//const { connect } = require("./utils/db");
+const MongoDB = require("./utils/db");
 
 app.use(cors());
 app.use(express.json());
@@ -46,7 +50,48 @@ const a = { a: { hex: 1 }, b: { hex: 2 }, c: { hex: 3 } };
 app.listen(PORT, async () => {
     console.log(`Listening on port: ${PORT}`);
 
-    await connect();
+    //await connect();
+    await MongoDB.connect();
 
-    AirLabs.dataCollector(-1);
+    //testingDB();
+    AirLabs.dataCollector();
 });
+
+//TODO DELETE THIS, JUST TO SHOW HOW MONGO WOULD HANDLE MODIFICATIONS AND UPDATES
+async function testingDB() {
+    console.log(`${new Date(Date.now()).toUTCString()}: ${"deleting"}`);
+    await Flight.deleteMany({});
+    console.log(
+        `${new Date(Date.now()).toUTCString()}: ${"finished deleting"}`
+    );
+
+    // let f = [
+    //     new Flight({ hex: 1 }),
+    //     new Flight({ hex: 2 }),
+    //     new Flight({ hex: 3 }),
+    //     new Flight({ hex: 4 }),
+    //     new Flight({ hex: 5 }),
+    // ];
+    let f = [];
+
+    await Flight.bulkSave(f);
+
+    for (let index = 0; index < 20000; index++) {
+        f.push(new Flight({ hex: 1000, reg_number: "aksd" }));
+    }
+    console.log(`${new Date(Date.now()).toUTCString()}: ${"Saving records"}`);
+    await Flight.bulkSave(f);
+    console.log(
+        `${new Date(Date.now()).toUTCString()}: ${"Finished saving records"}`
+    );
+
+    for (let index = 0; index < 20000; index++) {
+        f[index].lat = 90;
+    }
+
+    console.log(`${new Date(Date.now()).toUTCString()}: ${"Saving records"}`);
+    await Flight.bulkSave(f);
+    console.log(
+        `${new Date(Date.now()).toUTCString()}: ${"Finished saving records"}`
+    );
+}
