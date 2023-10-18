@@ -125,6 +125,8 @@ class AirLabs {
                     let flight = this.#airlabsSnapshot[airlabsFlight.hex];
                     flight.lat = airlabsFlight.lat;
                     flight.lng = airlabsFlight.lng;
+                    flight.dir = airlabsFlight.dir;
+                    flight.alt = airlabsFlight.alt;
                     flight.updated = airlabsFlight.updated;
                     flight.positionHistory.push({
                         lat: airlabsFlight.lat,
