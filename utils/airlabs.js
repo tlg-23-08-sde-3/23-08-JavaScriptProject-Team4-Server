@@ -78,15 +78,19 @@ class AirLabs {
                 );
             }
         } else {
-            await this.getFlightListFromDB();
             console.log(
                 "AirLabs data collection is OFF, loading offline data."
+            );
+            await this.getFlightListFromDB();
+            console.log(
+                `A total of ${this.AirlabsFlightsArray.length} were loaded.`
             );
         }
     }
 
     //This is what will happen on every cycle
     async dataCollectionCycle() {
+        this.printLog(`Starting cycle # ${this.#cycleCount}`);
         //First we get the data from Airlabs
         await this.updateFromAirLabs();
 
@@ -107,35 +111,43 @@ class AirLabs {
             let updatedFlightsCount = 0;
             let deletedFlightCount = 0;
             for (const airlabsFlight of ALFlights) {
-                //ADD
-                if (!this.#airlabsSnapshot[airlabsFlight.hex]) {
-                    this.#airlabsSnapshot[airlabsFlight.hex] = airlabsFlight;
-                    this.#airlabsSnapshot[airlabsFlight.hex].positionHistory = [
-                        {
+                if (
+                    (airlabsFlight.flight_icao || airlabsFlight.flight_iata) &&
+                    airlabsFlight.hex
+                ) {
+                    //ADD
+                    if (!this.#airlabsSnapshot[airlabsFlight.hex]) {
+                        this.#airlabsSnapshot[airlabsFlight.hex] =
+                            airlabsFlight;
+                        this.#airlabsSnapshot[
+                            airlabsFlight.hex
+                        ].positionHistory = [
+                            {
+                                lat: airlabsFlight.lat,
+                                lng: airlabsFlight.lng,
+                                alt: airlabsFlight.alt,
+                                dir: airlabsFlight.dir,
+                                updated: airlabsFlight.updated,
+                            },
+                        ];
+                        newFlightsCount++;
+                    } else {
+                        //UPDATE
+                        let flight = this.#airlabsSnapshot[airlabsFlight.hex];
+                        flight.lat = airlabsFlight.lat;
+                        flight.lng = airlabsFlight.lng;
+                        flight.dir = airlabsFlight.dir;
+                        flight.alt = airlabsFlight.alt;
+                        flight.updated = airlabsFlight.updated;
+                        flight.positionHistory.push({
                             lat: airlabsFlight.lat,
                             lng: airlabsFlight.lng,
                             alt: airlabsFlight.alt,
                             dir: airlabsFlight.dir,
                             updated: airlabsFlight.updated,
-                        },
-                    ];
-                    newFlightsCount++;
-                } else {
-                    //UPDATE
-                    let flight = this.#airlabsSnapshot[airlabsFlight.hex];
-                    flight.lat = airlabsFlight.lat;
-                    flight.lng = airlabsFlight.lng;
-                    flight.dir = airlabsFlight.dir;
-                    flight.alt = airlabsFlight.alt;
-                    flight.updated = airlabsFlight.updated;
-                    flight.positionHistory.push({
-                        lat: airlabsFlight.lat,
-                        lng: airlabsFlight.lng,
-                        alt: airlabsFlight.alt,
-                        dir: airlabsFlight.dir,
-                        updated: airlabsFlight.updated,
-                    });
-                    updatedFlightsCount++;
+                        });
+                        updatedFlightsCount++;
+                    }
                 }
             }
 
@@ -223,6 +235,17 @@ class AirLabs {
         this.#airlabsSnapshot = {};
 
         flights_backup.forEach((Flight) => {
+            this.#airlabsSnapshot[flight.hex] = flight;
+        });
+    }
+
+    async getFlightListFromDB() {
+        const flights_backup = await Flight.find({});
+
+        this.#startDateTime = 0;
+        this.#airlabsSnapshot = {};
+
+        flights_backup.forEach((flight) => {
             this.#airlabsSnapshot[flight.hex] = flight;
         });
     }
