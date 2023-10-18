@@ -48,8 +48,15 @@ Router.get("/api/airline/logo/:iata_code", async (req, res) => {
 });
 
 Router.post("/api/airline/populatedb", async (req, res) => {
-    await Airline.insertMany(AirlineDefault);
-    return res.send("ok");
+    try {
+        await Airline.insertMany(AirlineDefault);
+        return res.send({ status: "ok", total: AirlineDefault.length });
+    } catch (error) {
+        return res.status(500).send({
+            error: error,
+            status: `Error saving Airlines to the databse, check DB connection and try again: ${error}`,
+        });
+    }
 });
 
 module.exports = { Router };

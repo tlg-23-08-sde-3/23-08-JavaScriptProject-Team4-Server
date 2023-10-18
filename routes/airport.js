@@ -33,8 +33,15 @@ Router.get("/api/airport/", async (req, res) => {
 });
 
 Router.post("/api/airport/populatedb", async (req, res) => {
-    await Airport.insertMany(AirportDefault);
-    return res.send("ok");
+    try {
+        await Airport.insertMany(AirportDefault);
+        return res.send({ status: "ok", total: AirportDefault.length });
+    } catch (error) {
+        return res.status(500).send({
+            error: error,
+            status: `Error saving Airports to the databse, check DB connection and try again: ${error}`,
+        });
+    }
 });
 
 module.exports = { Router };
