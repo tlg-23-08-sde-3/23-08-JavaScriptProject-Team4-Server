@@ -35,6 +35,10 @@ app.use(TestRouter);
 app.use(FlightRouter);
 app.use(FlightsRouter);
 
+app.get("/api/check", async (req, res) => {
+    res.status(200).json({ message: "OK" });
+});
+
 const PORT = process.env.PORT || 8080;
 
 const a = { a: { hex: 1 }, b: { hex: 2 }, c: { hex: 3 } };
@@ -47,15 +51,33 @@ const a = { a: { hex: 1 }, b: { hex: 2 }, c: { hex: 3 } };
 //     console.log(a[t]);
 // }
 
-app.listen(PORT, async () => {
+//MongoDB.connect();
+
+app.listen(PORT, async function () {
     console.log(`Listening on port: ${PORT}`);
 
-    //await connect();
     await MongoDB.connect();
 
-    //testingDB();
-    AirLabs.dataCollector();
+    await AirLabs.dataCollector();
 });
+
+//AirLabs.dataCollector();
+
+////TEST
+// async function continuousFunction() {
+//     // Perform asynchronous tasks here
+//     // For this example, we'll simulate an asynchronous task with a timeout
+//     setTimeout(async () => {
+//         console.log("Continuous function executed");
+//         let a;
+//         for (let i = 0; i < 9999999999; i++) {
+//             a = i;
+//         }
+//         console.log("Finished");
+//     }, 1000);
+// }
+
+// const interval = await setInterval(continuousFunction, 1000);
 
 //TODO DELETE THIS, JUST TO SHOW HOW MONGO WOULD HANDLE MODIFICATIONS AND UPDATES
 async function testingDB() {

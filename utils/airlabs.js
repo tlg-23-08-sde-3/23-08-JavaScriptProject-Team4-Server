@@ -14,7 +14,6 @@ let AirLabsInstance;
 class AirLabs {
     #name;
     #airlabsSnapshot = {};
-    #flightsList = [];
     #cycleCount = 1;
     #startDateTime;
     //This makes sure there is only one instance of this class at any time
@@ -24,12 +23,14 @@ class AirLabs {
     #db_backups = true;
     #airlabs_collect_data = true;
     #flight_timeout = 600;
+
     constructor() {
         if (AirLabsInstance) {
             throw new Error("New instance cannot be created!!");
         }
         AirLabsInstance = this;
 
+        //Obtaining the ENV values and storing them in local variables.
         if (process.env.TIME_BETWEEN_CYCLES) {
             this.#seconds = Number(process.env.TIME_BETWEEN_CYCLES);
         }
@@ -37,12 +38,11 @@ class AirLabs {
             this.#max_cycles = Number(process.env.MAX_AIRLABS_CYCLES);
         }
         if (process.env.DB_BACKUPS) {
-            this.#db_backups = Boolean(process.env.DB_BACKUPS);
+            this.#db_backups = process.env.DB_BACKUPS === "true";
         }
         if (process.env.AIRLABS_COLLECT_DATA) {
-            this.#airlabs_collect_data = Boolean(
-                process.env.AIRLABS_COLLECT_DATA
-            );
+            this.#airlabs_collect_data =
+                process.env.AIRLABS_COLLECT_DATA === "true";
         }
         if (process.env.FLIGHT_TIMETOUT) {
             this.#flight_timeout = Number(process.env.FLIGHT_TIMETOUT);
@@ -51,9 +51,6 @@ class AirLabs {
 
     //Entry point function of this class. It will call the updateAllData function every XXX seconds.
     async dataCollector() {
-        //Getting the flights from the DataBase
-        //this.#flightsList = await this.getFlightListFromDB(true);
-
         this.#startDateTime = Date.now();
 
         //if airlabs_collect_data is set to true then we collect data from AirLabs, if not then we just load it from the DB
@@ -88,77 +85,18 @@ class AirLabs {
         }
     }
 
-    //HAVING MEMORY LEAK PROBLEMS WITH THIS ONE, LETS MAKE IS SIMPLER
-    //Main function that gets flights from the DataBase and Airlabs and updates as needed
-    //DEPRECATED
-    // async updateAllData() {
-    //     let DBFlights = this.#flightsList;
-    //     //Collecting the latest flights from AirLabs
-    //     let ALFlights = await this.getFlightListFromAirLabs(true);
-    //     //Checking that we received something from active fligths
-    //     if (ALFlights && ALFlights.length != 0) {
-    //         let newFlightsList = []; // Any new flight that AirLabs added since the last update
-    //         let updateFlightsList = []; // Fligths that we already had and need to be updated with AirLabs data
-    //         let latestUpdateTime = ALFlights[0].updated; // The latest update time
-    //         // First we need to clean the DataBase and mark old flights as inactive
-    //         await this.cleanOldFlightsDB(latestUpdateTime, 6000, true);
-
-    //         // Loop through flights obtained from AirLabs
-    //         for (const airlabsFlight of ALFlights) {
-    //             // See if the airlabsFlight exist in the database
-    //             let dbFlight = DBFlights.find((flight) => {
-    //                 return airlabsFlight.hex === flight.hex;
-    //             });
-    //             //If it exists then we need to update some properties then add this flight to the updateFligths array to be pushed to the DB later
-    //             if (dbFlight) {
-    //                 dbFlight.lat = airlabsFlight.lat;
-    //                 dbFlight.lng = airlabsFlight.lng;
-    //                 dbFlight.dir = airlabsFlight.dir;
-    //                 dbFlight.updated = airlabsFlight.updated;
-    //                 dbFlight.positionHistory.push({
-    //                     lat: airlabsFlight.lat,
-    //                     lng: airlabsFlight.lng,
-    //                     alt: airlabsFlight.alt,
-    //                     dir: airlabsFlight.dir,
-    //                     updated: airlabsFlight.updated,
-    //                 });
-    //                 updateFlightsList.push(dbFlight);
-    //             }
-    //             //If it doesn't exist then it is a new flight, we set some properties and push it to the newFlights array
-    //             else {
-    //                 airlabsFlight.isActive = true;
-    //                 airlabsFlight.positionHistory = {
-    //                     lat: airlabsFlight.lat,
-    //                     lng: airlabsFlight.lng,
-    //                     alt: airlabsFlight.alt,
-    //                     dir: airlabsFlight.dir,
-    //                     updated: airlabsFlight.updated,
-    //                 };
-    //                 newFlightsList.push(airlabsFlight);
-    //             }
-    //         }
-    //         // Add the new flights to the database
-    //         this.addFlightsToDB(newFlightsList, true);
-    //         // Update flights in the database
-    //         this.updatesFlightsDB(updateFlightsList, true);
-    //         //Finally we update the flightsList with the flights from the DataBase
-
-    //         //this.#flightsList = null;
-    //         newFlightsList = null;
-    //         updateFlightsList = null;
-    //         DBFlights = null;
-    //         ALFlights = null;
-    //         this.#flightsList = await this.getFlightListFromDB(true);
-    //     }
-    // }
+    //This is what will happen on every cycle
     async dataCollectionCycle() {
+        //First we get the data from Airlabs
         await this.updateFromAirLabs();
 
+        //Then we store it in the database
         if (this.#db_backups === true) {
             await this.saveFlightBackupToDB();
         }
     }
 
+    //Getting data from AirLabs
     async updateFromAirLabs() {
         let ALFlights = await this.getFlightListFromAirLabs(true);
         if (ALFlights && ALFlights.length != 0) {
@@ -232,15 +170,8 @@ class AirLabs {
             this.printLog(`------------------------------------------`, true);
         }
     }
-    //TRYING TO MAKE IT IGNORE THE DATABASE
 
-    ///////////////////////////
-    async deleteDB() {
-        this.printLog(`Starting deleting the entire DB.`, true);
-        await Flight.deleteMany({});
-        this.printLog(`Finished deleting the entire DB.`, true);
-    }
-
+    //Saving data into the database
     async saveFlightBackupToDB() {
         let flightsBackup = {};
         flightsBackup.flights = this.AirlabsFlightsArray;
@@ -249,11 +180,28 @@ class AirLabs {
 
         try {
             this.printLog(`Saving flights to the database.`, true);
-            const newFlights = await FlightsBackup.findOneAndUpdate(
-                { startedDateTime: this.#startDateTime },
-                { $set: flightsBackup },
-                { upsert: true, new: true }
-            );
+            // await FlightsBackup.findOneAndUpdate(
+            //     { startedDateTime: this.#startDateTime },
+            //     { $set: flightsBackup },
+            //     { upsert: true, new: true }
+            // );
+
+            this.printLog(`Finding the one`, true);
+            let dbFlightDB = FlightsBackup.findOne({
+                startedDateTime: this.#startDateTime,
+            });
+
+            if (dbFlightDB) {
+                this.printLog(`Found one, deleting it`, true);
+                await FlightsBackup.findOneAndDelete({
+                    startedDateTime: flightsBackup.startedDateTime,
+                });
+            }
+            this.printLog(`Inserting new one`, true);
+            await FlightsBackup.create(flightsBackup);
+            //await FlightsBackup.insertMany(flightsBackup);
+            this.printLog(`Finished inserting new one`, true);
+
             this.printLog(`Finished saving flights to the database.`, true);
         } catch (error) {
             this.printLog(
@@ -263,16 +211,7 @@ class AirLabs {
         }
     }
 
-    //It adds flights to the database
-    async addFlightsToDB(flights, verbose) {
-        this.printLog(
-            `Adding new (${flights?.length}) flights to the database.`,
-            verbose
-        );
-        Flight.insertMany(flights);
-        this.printLog(`Flights added to the database.`, verbose);
-    }
-
+    //Obtains flights from the database
     async getFlightsFromDB() {
         const flights_backup = FlightsBackup.findOne({}).sort({
             startedDateTime: -1,
@@ -284,25 +223,6 @@ class AirLabs {
         flights_backup.forEach((Flight) => {
             this.#airlabsSnapshot[flight.hex] = flight;
         });
-    }
-
-    ////////////////////////
-
-    //deprecated
-    setSnapshot(airlabsData) {
-        const tempSnapshot = airlabsData.map(function (flight) {
-            return {
-                hex: flight.hex,
-                reg_number: flight.reg_number,
-                lat: flight.lat,
-                lng: flight.lng,
-                dir: flight.dir,
-                flight_icao: flight.flight_icao,
-                flight_iata: flight.flight_iata,
-            };
-        });
-
-        this.#airlabsSnapshot = tempSnapshot;
     }
 
     //Given a flight hex, will query AirLabs API and return an specific flight
@@ -329,25 +249,12 @@ class AirLabs {
             const airlabsResponse = await axios(
                 `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${icao_code}&flight_iata=${iata_code}`
             );
-            // airlabsResponse.data.response.positionHistory =
-            //     flight.positionHistory;
             console.log(airlabsResponse.data);
             return airlabsResponse.data.response;
         } else {
             throw new Error(`Flight hex: ${hex} doesn't exist.`);
         }
         return undefined;
-    }
-
-    //returns all the active flights from the database.
-    async getFlightListFromDB(verbose) {
-        this.printLog("Obtaining flights from the Database.", verbose);
-        const activeFlights = await Flight.find({ isActive: true }); // add this in case we want to filter the return .select("hex reg_number dir lat lng flight_iata flight_icao")
-        this.printLog(
-            `A total of ${activeFlights.length} flights were obtained.`,
-            verbose
-        );
-        return activeFlights;
     }
 
     //It gets a flight list from AirLabs.
@@ -374,40 +281,6 @@ class AirLabs {
         }
     }
 
-    //It updates flights in the database
-    async updateFlightsDB(flights, verbose) {
-        this.printLog(
-            `Updating (${flights?.length}) flights in the database.`,
-            verbose
-        );
-        Flight.bulkSave(flights);
-        this.printLog(`Flights updated in the database.`, verbose);
-    }
-
-    //Cleans up flights that hasn't been updated for a while
-    async cleanDB(lastUpdatedTime, time, verbose) {
-        this.printLog(`Finding inactive flights.`, verbose);
-
-        const timer = lastUpdatedTime - time;
-
-        let inactive = await Flight.find({
-            isActive: true,
-            updated: { $lt: timer }, //if updated is older than (last updated time minus time) then we updated it
-        });
-        this.printLog(
-            `Found ${inactive?.length} flights that are inactive, updating them.`
-        );
-        for (const flight of inactive) {
-            flight.isActive = false;
-        }
-
-        await Flight.bulkSave(inactive);
-        this.printLog(
-            `A tolta of ${inactive?.length} flights were updated to inactive.`,
-            verbose
-        );
-    }
-
     // It just prints a log in the console with the current time, moved this here to clean up the main functions
     printLog(message, verbose = false) {
         if (verbose) {
@@ -421,9 +294,6 @@ class AirLabs {
     }
     set name(val) {
         this.#name = val;
-    }
-    get Flights() {
-        return this.#flightsList;
     }
     get AirlabsFlightsArray() {
         return Object.values(this.#airlabsSnapshot);
