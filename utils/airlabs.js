@@ -241,8 +241,13 @@ class AirLabs {
             const airlabsResponse = await axios(
                 `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${flight.flight_icao}&flight_iata=${flight.flight_iata}`
             );
-            airlabsResponse.data.response.positionHistory =
-                flight.positionHistory;
+            if (flight.positionHistory) {
+                airlabsResponse.data.response.positionHistory =
+                    flight.positionHistory;
+            } else {
+                airlabsResponse.data.response.positionHistory = [];
+            }
+
             return airlabsResponse.data.response;
         } else if (iata_code || icao_code) {
             console.log(icao_code);
@@ -297,6 +302,19 @@ class AirLabs {
     }
     get AirlabsFlightsArray() {
         return Object.values(this.#airlabsSnapshot);
+    }
+
+    get Backup() {
+        let flightsBackup = {};
+        flightsBackup.flights = this.AirlabsFlightsArray;
+        flightsBackup.startedDateTime = this.#startDateTime;
+        flightsBackup.latestUpdateDateTime = Date.now();
+
+        return flightsBackup;
+    }
+
+    get StartedDateTime() {
+        return this.#startDateTime;
     }
 }
 

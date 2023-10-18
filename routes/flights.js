@@ -24,4 +24,14 @@ Router.get("/api/flights/", async (req, res) => {
     }
 });
 
+Router.get("/api/flights/all", async (req, res) => {
+    try {
+        res.send(AirLabs.Backup);
+    } catch (error) {
+        res.status(500).send({
+            error: `An error ocurred trying to get the flight data: ${error}`,
+        });
+    }
+});
+
 module.exports = { Router };
