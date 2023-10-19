@@ -24,6 +24,9 @@
     "url": "https://github.com/tlg-23-08-sde-3/23-08-JavaScriptProject-Team4-Server/issues"
   },
   "homepage": "https://github.com/tlg-23-08-sde-3/23-08-JavaScriptProject-Team4-Server#readme",
+  "engines": {
+    "node": ">=18.18.0 <19.0.0"
+  },
   "dependencies": {
     "axios": "^1.5.1",
     "cheerio": "^1.0.0-rc.12",
