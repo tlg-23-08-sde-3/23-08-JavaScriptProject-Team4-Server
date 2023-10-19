@@ -12,12 +12,12 @@ Router.get("/api", (req, res) => {
 });
 
 //Returns a picture given an Aircraft's registration code
-Router.get("/api/airplane/picture/:registration", async (req, res) => {
-    const registration = req.params.registration;
-    const url = await Scrapper.JetPhotosScrapPictures(registration);
+// Router.get("/api/airplane/picture/:registration", async (req, res) => {
+//     const registration = req.params.registration;
+//     const url = await Scrapper.JetPhotosScrapPictures(registration);
 
-    res.send({ picture: url });
-});
+//     res.send({ picture: url });
+// });
 
 // DEPRECATED
 // Router.get("/api/flights/", (req, res) => {
