@@ -90,7 +90,10 @@ class AirLabs {
 
     //This is what will happen on every cycle
     async dataCollectionCycle() {
-        this.printLog(`Starting cycle # ${this.#cycleCount}`);
+        this.printLog(
+            `Starting cycle # ${this.#cycleCount} of ${this.#max_cycles}`,
+            true
+        );
         //First we get the data from Airlabs
         await this.updateFromAirLabs();
 
@@ -262,11 +265,17 @@ class AirLabs {
             icao_code = "";
         }
 
+        let url = `https://airlabs.co/api/v9/flight?api_key=${
+            process.env.AIRLABS_APIKEY
+        }&flight_icao=${
+            flight.flight_icao !== undefined ? flight.flight_icao : ""
+        }&flight_iata=${
+            flight.flight_iata !== undefined ? flight.flight_iata : ""
+        }`;
+
         if (flight !== undefined) {
-            const airlabsResponse = await axios(
-                `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${flight.flight_icao}&flight_iata=${flight.flight_iata}`
-            );
-            if (flight.positionHistory) {
+            const airlabsResponse = await axios(url);
+            if (flight?.positionHistory) {
                 airlabsResponse.data.response.positionHistory =
                     flight.positionHistory;
             } else {
@@ -279,7 +288,6 @@ class AirLabs {
             const airlabsResponse = await axios(
                 `https://airlabs.co/api/v9/flight?api_key=${process.env.AIRLABS_APIKEY}&flight_icao=${icao_code}&flight_iata=${iata_code}`
             );
-            console.log(airlabsResponse.data);
             return airlabsResponse.data.response;
         } else {
             throw new Error(`Flight hex: ${hex} doesn't exist.`);

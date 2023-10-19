@@ -17,6 +17,9 @@ Router.get("/api/flight/", async (req, res) => {
 
         return res.send(result);
     } catch (error) {
+        console.log(
+            "============ ERROR IN /api/flight/ ENDPOINT ============="
+        );
         return res
             .status(500)
             .send({ error: `Error trying to obtain flight info: ${error}` });
